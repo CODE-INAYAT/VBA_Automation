@@ -1,0 +1,87 @@
+' Function To Create split the sheet
+Sub SplitDataBySelectedColumn()
+    Dim ws As Worksheet
+    Dim wsNew As Worksheet
+    Dim rng As Range
+    Dim lastRow As Long
+    Dim lastCol As Long
+    Dim uniqueValues As Collection
+    Dim cell As Range
+    Dim value As Variant
+    Dim colToFilter As Long
+    Dim columnHeader As String
+    Dim headerFound As Boolean
+    Dim i As Long
+    Dim sanitizedValue As String
+
+    Set ws = ActiveSheet
+    lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row
+    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Set rng = ws.Range(ws.Cells(1, 1), ws.Cells(lastRow, lastCol))
+
+    columnHeader = InputBox("Enter the column header to split the data by (case-insensitive):")
+    If columnHeader = "" Then
+        MsgBox "No column header entered. Exiting.", vbExclamation
+        Exit Sub
+    End If
+
+    headerFound = False
+    For colToFilter = 1 To lastCol
+        If LCase(ws.Cells(1, colToFilter).Value) = LCase(columnHeader) Then
+            headerFound = True
+            Exit For
+        End If
+    Next colToFilter
+
+    If Not headerFound Then
+        MsgBox "Column header not found. Please try again.", vbExclamation
+        Exit Sub
+    End If
+
+    Set uniqueValues = New Collection
+    On Error Resume Next
+    For Each cell In ws.Range(ws.Cells(2, colToFilter), ws.Cells(lastRow, colToFilter))
+        uniqueValues.Add cell.Value, CStr(cell.Value)
+    Next cell
+    On Error GoTo 0
+
+    For Each value In uniqueValues
+        sanitizedValue = Replace(CStr(value), "/", "_")
+        sanitizedValue = Replace(sanitizedValue, "\", "_")
+        sanitizedValue = Replace(sanitizedValue, "*", "_")
+        sanitizedValue = Replace(sanitizedValue, "[", "_")
+        sanitizedValue = Replace(sanitizedValue, "]", "_")
+        sanitizedValue = Left(sanitizedValue, 31) 
+
+        On Error Resume Next
+        Set wsNew = ThisWorkbook.Sheets(sanitizedValue)
+        On Error GoTo 0
+        If wsNew Is Nothing Then
+            Set wsNew = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+            wsNew.Name = sanitizedValue
+        Else
+            Set wsNew = Nothing
+            GoTo NextValue
+        End If
+
+        ws.Rows(1).Copy
+        wsNew.Rows(1).PasteSpecial Paste:=xlPasteAll
+
+        i = 2 ' Start pasting from row 2 in the new sheet
+        For Each cell In ws.Range(ws.Cells(2, colToFilter), ws.Cells(lastRow, colToFilter))
+            If cell.Value = value Then
+                cell.EntireRow.Copy
+                wsNew.Rows(i).PasteSpecial Paste:=xlPasteAll
+                i = i + 1
+            End If
+        Next cell
+
+        wsNew.Columns.EntireColumn.AutoFit
+
+NextValue:
+        Set wsNew = Nothing
+    Next value
+
+    Application.CutCopyMode = False
+    MsgBox "Data has been successfully split into separate sheets.", vbInformation
+End Sub

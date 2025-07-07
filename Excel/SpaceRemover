@@ -1,0 +1,13 @@
+' Function TO remove leading & trailing spaces
+Sub TrimSpaces()
+    Dim cell As Range
+    On Error Resume Next
+    For Each cell In Selection
+        If Not IsEmpty(cell.Value) And VarType(cell.Value) = vbString Then
+            cell.Value = Trim(cell.Value)
+        End If
+    Next cell
+    On Error GoTo 0
+    
+    MsgBox "All Leading & Trailing Spaces are removed"
+End Sub
