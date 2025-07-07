@@ -1,0 +1,27 @@
+' Function For Autofit of cells
+Sub AutoFitCells()
+    Dim cell As Range
+    Dim extraWidthCM As Double
+    Dim extraHeightCM As Double
+    Dim extraWidthUnits As Double
+    Dim extraHeightUnits As Double
+    
+    ' Define extra space in cm
+    extraWidthCM = 0
+    extraHeightCM = 0
+    
+    extraWidthUnits = extraWidthCM / 0.142857
+    extraHeightUnits = extraHeightCM / 0.035277
+    
+    On Error Resume Next
+    Selection.Columns.AutoFit
+    Selection.Rows.AutoFit
+    
+    For Each cell In Selection
+        cell.ColumnWidth = cell.ColumnWidth + extraWidthUnits
+        cell.RowHeight = cell.RowHeight + extraHeightUnits
+    Next cell
+    On Error GoTo 0
+    
+    MsgBox "Cells have been auto-fitted.", vbInformation
+End Sub
